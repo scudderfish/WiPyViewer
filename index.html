@@ -226,11 +226,6 @@ function resetChart(e){
 		var serial={}
 		serial["values"]=dataSeries[selects[i].value]
 		serial["text"]=selects[i].value
-		var scale="scale-x,scale-y"
-		if(i>0) {
-			scale=scale+"-"+(i+1)
-		}
-		serial["scales"]=scale
 		series.push(serial)
 	}
 
@@ -242,18 +237,8 @@ function resetChart(e){
 		"scale-x":{"labels":xaxis,"zooming":true}
 	};
 	for(var i=0;i<numSelects;i++){
-		var name="scale-y"
-		if(i>0) {
-			name=name+"-"+(i+1)
-		}
 		chartData[name]={"label":{"text":selects[i].value}}
-		//"placement":"opposite"
-		if(i % 2 == 0){
-			chartData[name]["placement"]="opposite";
-		}
-		else {
-			chartData[name]["placement"]="default";	
-		}
+	
 	}
 	showChart(chartData)
 }
