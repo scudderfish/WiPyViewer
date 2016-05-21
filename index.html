@@ -39,6 +39,223 @@
 </head>
 
 <body>
-Hello World!
+<h1>WiPy Log Viewer</h1>
+
+<section id="dropTarget" ondrop="drop(event)" ondragover="allowDrop(event)">
+<div id='headings'>
+	<div >
+		
+		Select a text file or just drop one here: 
+		<input type="file" id="fileInput">
+		
+	</div>
+	<h2 id='CaptureDate'></h2>		
+</div>
+<div id='controls'>
+	<select class='seriesSelect' id='s1'></select>
+	<select class='seriesSelect' id='s2'></select>
+	<select class='seriesSelect' id='s3'></select>
+</div>
+<div id='controlscontrol'>
+	<button id="addSeriesBtn" onclick="addSeries()">Add Data Line</button>
+	<br />
+	<button id="removeSeriesBtn" onclick="removeSeries()">Remove Data Line</button>
+</div>
+</section>
+	<div id ='chartDiv'></div>
+
 </body>
+
+<script type="text/javascript">
+
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+}
+
+function drop(ev) {
+    ev.preventDefault();
+
+	var dt    = ev.dataTransfer;
+  	var files = dt.files;
+   	loadFile(files[0])
+}
+
+
+function numSeries() {
+	return document.querySelectorAll('.seriesSelect').length
+}
+
+function addSeries() {
+	if(numSeries() < 5) {
+		var controls=document.getElementById('controls')
+		var select=document.createElement('select')
+		select.className='seriesSelect';
+		select.addEventListener('change',resetChart)
+		setOptions(select,ui["dataSeries"]["headers"])
+		controls.appendChild(select)
+		resetChart()
+
+	}
+}
+function removeSeries() {
+	if(numSeries() > 2) {
+		var selectors=document.querySelectorAll('.seriesSelect');
+		var toDie=selectors[selectors.length-1]
+		toDie.parentNode.removeChild(toDie)		
+		resetChart()
+	}
+}
+function loadFile(file){
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		processData(reader.result);
+		setupSelectors()
+		setOptionDefaults("RPM","CLT","MAT")
+		resetChart()
+	}
+	reader.readAsText(file);	
+
+}
+window.onload = function() {
+		var fileInput = document.getElementById('fileInput');
+		var fileDisplayArea = document.getElementById('fileDisplayArea');
+
+		fileInput.addEventListener('change', function(e) {
+			var file = fileInput.files[0];
+			loadFile(file);
+		});
+}
+function setupSelectors() {
+	var selects = document.querySelectorAll('.seriesSelect')
+	for(var i=0;i<selects.length;i++){
+		selects[i].addEventListener('change',resetChart)
+		setOptions(selects[i],ui["dataSeries"]["headers"])
+	}
+}
+
+function processData(data) {
+	var lines = data.split('\n');
+	var header=lines.splice(0,2);
+	setCaptureDate(header[1])
+	var dataSeries = createSeries(lines)
+
+	ui["dataSeries"]=dataSeries
+}
+
+
+function setCaptureDate(dte) {
+	dte=dte.replace(/['"]+/g, '')
+	document.getElementById('CaptureDate').innerText=dte;
+}
+
+function createSeries(data) {
+	var series= {};
+	headers=data[0].split('\t')
+	for(var i = 0;i<headers.length;i++) {
+		series[headers[i]]=[];
+	}
+
+	for (var i = 1 ; i < data.length;i++) {
+		var values=data[i].split('\t')
+		for (var j=0;j<values.length;j++) {
+			series[headers[j]].push(Number(values[j]))
+		}
+	}
+	series["headers"]=headers
+	return series
+}
+
+function setOptions(select,list) {
+	while (select.options.length > 0) {
+        select.remove(select.options.length - 1);
+    }
+    for(var i=0;i<list.length;i++) {
+    	var opt = document.createElement('option');
+
+        opt.text = list[i];
+        opt.value = list[i];
+
+        select.add(opt, null);
+    }
+}
+function setOptionDefaults() {
+	var selects = document.querySelectorAll('.seriesSelect')
+	for(var i=0; i< selects.length && i < arguments.length;i++) {
+		selects[i].value = arguments[i]
+	}
+}
+
+function resetChart(e){
+	var dataSeries=ui["dataSeries"]
+	var xaxis=dataSeries["Time"]
+
+	var selects = document.querySelectorAll('.seriesSelect')
+	var numSelects=selects.length
+	var series=[]
+	for(var i=0;i<numSelects;i++){
+		var serial={}
+		serial["values"]=dataSeries[selects[i].value]
+		serial["text"]=selects[i].value
+		var scale="scale-x,scale-y"
+		if(i>0) {
+			scale=scale+"-"+(i+1)
+		}
+		serial["scales"]=scale
+		series.push(serial)
+	}
+
+	var chartData={
+	 	"crosshair-x":{},
+	    "type":"line",  
+	    "series":series,
+	    "scroll-x":{},
+		"scale-x":{"labels":xaxis,"zooming":true}
+	};
+	for(var i=0;i<numSelects;i++){
+		var name="scale-y"
+		if(i>0) {
+			name=name+"-"+(i+1)
+		}
+		chartData[name]={"label":{"text":selects[i].value}}
+		//"placement":"opposite"
+		if(i % 2 == 0){
+			chartData[name]["placement"]="opposite";
+		}
+		else {
+			chartData[name]["placement"]="default";	
+		}
+	}
+	showChart(chartData)
+}
+function showChart(chartData) {
+	zingchart.render({ 
+	    id:'chartDiv',
+	    data:chartData,
+	    height:"100%",
+	    width:"100%"
+	});
+}
+
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </html>
