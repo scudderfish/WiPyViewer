@@ -83,8 +83,14 @@ function drop(ev) {
   	var files = dt.files;
    	loadFile(files[0])
 }
-
-//Time	f2 High	42 Rad out	31 Rad in	9a Ambient	b4 Air
+var headerMap={
+	'Time' : 'Time',
+	'28ffeb73531502f2':'HighPoint',
+	'28ff5d8f53150242':'Rad Out',
+	'28ff6d7853150231':'Rad In',
+	'28ff5a5c5315029a':'Ambient',
+	'28ff4274531502b4':'Air Filter'
+}
 function numSeries() {
 	return document.querySelectorAll('.seriesSelect').length
 }
@@ -115,7 +121,7 @@ function loadFile(file){
 	reader.onload = function(e) {
 		processData(reader.result);
 		setupSelectors()
-		setOptionDefaults("RPM","CLT","MAT")
+		setOptionDefaults("Rad In","Rad Out","HighPoint")
 		resetChart()
 	}
 	reader.readAsText(file);	
@@ -155,18 +161,35 @@ function setCaptureDate(dte) {
 	document.getElementById('CaptureDate').innerText=startDate.toString()
 }
 
+function sanitizeValues(idx,current,old) {
+	for(var i=0;i<current.length;i++) {
+		var diff=Math.abs(current[i]-old[i]);
+		if(diff>10000) {
+			console.log("idx "+idx+" current "+current[i]+" old "+old[i])
+			current[i]=old[i];
+		}
+	}
+}
+
 function createSeries(data) {
 	var series= {};
 	var headers=data[0].split(',')
+	for(var i=0;i<headers.length;i++) {
+		headers[i]=headerMap[headers[i]]
+	}
 	for(var i = 0;i<headers.length;i++) {
 		series[headers[i]]=[];
 	}
-
+	var oldValues=data[1].split(',')
 	for (var i = 1 ; i < data.length;i++) {
+
 		var values=data[i].split(',')
+
+		sanitizeValues(i,values,oldValues)
 		for (var j=0;j<values.length;j++) {
 			series[headers[j]].push(Number(values[j]))
 		}
+		oldValues=values;
 	}
 	series["headers"]=headers
 	return series
