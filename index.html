@@ -110,6 +110,7 @@ function removeSeries() {
 	}
 }
 function loadFile(file){
+	ui={}
 	var reader = new FileReader();
 	reader.onload = function(e) {
 		processData(reader.result);
@@ -139,8 +140,7 @@ function setupSelectors() {
 
 function processData(data) {
 	var lines = data.split('\n');
-	var header=lines.splice(0,2);
-	setCaptureDate(header[1])
+	setCaptureDate(lines[1])
 	var dataSeries = createSeries(lines)
 
 	ui["dataSeries"]=dataSeries
@@ -148,19 +148,22 @@ function processData(data) {
 
 
 function setCaptureDate(dte) {
-	dte=dte.replace(/['"]+/g, '')
-	document.getElementById('CaptureDate').innerText=dte;
+	var startDate = new Date(2000,0,1) //WiPy epoc
+
+	var numSecs = dte.split(',')[0]
+	startDate.setSeconds(startDate.getSeconds()+numSecs);
+	document.getElementById('CaptureDate').innerText=startDate.toString()
 }
 
 function createSeries(data) {
 	var series= {};
-	headers=data[0].split('\t')
+	var headers=data[0].split(',')
 	for(var i = 0;i<headers.length;i++) {
 		series[headers[i]]=[];
 	}
 
 	for (var i = 1 ; i < data.length;i++) {
-		var values=data[i].split('\t')
+		var values=data[i].split(',')
 		for (var j=0;j<values.length;j++) {
 			series[headers[j]].push(Number(values[j]))
 		}
