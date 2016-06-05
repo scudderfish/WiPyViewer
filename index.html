@@ -145,10 +145,15 @@ function processData(data) {
 	var lines = data.split('\n');
 	setCaptureDate(lines[1])
 	var dataSeries = createSeries(lines)
-
+	adjustTime(dataSeries['Time']);
 	ui["dataSeries"]=dataSeries
 }
-
+function adjustTime(series){
+	var start=series[0];
+	for(var i =0; i<series.length;i++) {
+		series[i]=series[i]-start;
+	}
+}
 
 function setCaptureDate(dte) {
 	var startDate = new Date(2000,0,1) //WiPy epoc
